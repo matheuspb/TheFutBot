@@ -15,6 +15,7 @@ bot.
 """
 
 from typing import Pattern
+import futdatabase
 import passwords
 import messages
 import logging
@@ -37,47 +38,6 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-# client = pymongo.MongoClient("mongodb+srv://futmanager:admin@cluster0.wmvup.mongodb.net/myFirstDatabase?retryWrites=true&w=majority")
-client = pymongo.MongoClient(passwords.MONGO_CLIENT_URL)
-db = client["TheFutDatabase"]
-jogadores = db["Jogadores"]
-futs = db["Futs"]
-
-def add_jogador(id_jogador, goleiro):
-    jogador_existente = jogadores.find_one({"_id": id_jogador})
-
-    if jogador_existente == None:
-        jogadores.insert_one({
-            "_id": id_jogador,
-            "mensalista": False,
-            "goleiro": goleiro,
-            "rank": 500,
-            "partidas": {
-                "total": 0,
-                "vitorias": 0,
-                "empates": 0,
-                "derrotas": 0
-            },
-            "saldo_gols": {
-                "gols_feitos": 0,
-                "gols_sofridos": 0
-            }})
-        return True
-    else:
-        jogadores.update_one({"_id": id_jogador}, {"$set":{"goleiro": goleiro}})
-        return False
-
-def init_chamada_fut():
-    chamada_fut = futs.find_one({"_id": "chamada_pro_fut"})
-    if chamada_fut != None:
-        return False
-    else:
-        pymongo_mensalistas = jogadores.find({"mensalista": True})
-        mensalistas = []
-        for pymongo_mensalista in pymongo_mensalistas:
-            print(pymongo_mensalista["_id"])
-            mensalistas.append(pymongo_mensalista["_id"])
-
 
 # Define a few command handlers. These usually take the two arguments update and
 # context. Error handlers also receive the raised TelegramError object in error.
@@ -93,57 +53,44 @@ def help_command(update: Update, context: CallbackContext) -> None:
 
 def c_linha(update: Update, context: CallbackContext) -> None:
     id_jogador = "@" + update.message.from_user.username   
-    if add_jogador(id_jogador, False):
+    if futdatabase.add_jogador(id_jogador, False):
         update.message.reply_text(id_jogador + ' cadastrado como jogador linha!')
     else:
         update.message.reply_text(id_jogador + ' atualizado para jogador linha!')
 
 
 def c_goleiro(update: Update, context: CallbackContext) -> None:
+    
     id_jogador = "@" + update.message.from_user.username   
-    if add_jogador(id_jogador, True):
+    
+    if futdatabase.add_jogador(id_jogador, True):
         update.message.reply_text(id_jogador + ' cadastrado como goleiro!')
     else:
         update.message.reply_text(id_jogador + ' atualizado para goleiro!')
 
 
 def c_mensalista(update: Update, context: CallbackContext) -> None:
-    id_jogador = "@" + update.message.from_user.username
-    jogador_existente = jogadores.find_one({"_id": id_jogador})
     
-    if jogador_existente != None:
-        jogadores.update_one({"_id": id_jogador}, {"$set":{"mensalista": True}})
+    id_jogador = "@" + update.message.from_user.username
+    
+    if futdatabase.convert_to_mensalista(id_jogador):
         update.message.reply_text(id_jogador + ' agora é um mensalista!')
     else:
         update.message.reply_text(id_jogador + ' não está cadastrado como jogador. Use /goleiro ou /linha para se cadastrar e depois /mensalista para virar um mensalista.')
 
 
 def c_diarista(update: Update, context: CallbackContext) -> None:
-    id_jogador = "@" + update.message.from_user.username
-    jogador_existente = jogadores.find_one({"_id": id_jogador})
     
-    if jogador_existente != None:
-        jogadores.update_one({"_id": id_jogador}, {"$set":{"mensalista": False}})
+    id_jogador = "@" + update.message.from_user.username
+    
+    if futdatabase.convert_to_diarista(id_jogador):
         update.message.reply_text(id_jogador + ' agora é um diarista!')
     else:
         update.message.reply_text(id_jogador + ' não está cadastrado como jogador. Use /goleiro ou /linha para se cadastrar e já será cadastrado como diarista.')
 
 
 def c_fut(update: Update, context: CallbackContext) -> None:
-    chamada_fut = futs.find_one({"_id": "chamada_pro_fut"})
-    if chamada_fut == None:
-        pymongo_mensalistas = jogadores.find({"mensalista": True})
-        mensalistas = []
-        for pymongo_mensalista in pymongo_mensalistas:
-            mensalistas.append(pymongo_mensalista["_id"])
-
-        futs.insert_one({
-            "_id": "chamada_pro_fut",
-            "confirmados": mensalistas
-        })
-
-    chamada_fut = futs.find_one({"_id": "chamada_pro_fut"})
-    confirmados = chamada_fut["confirmados"]
+    confirmados = futdatabase.create_fut()
 
     keyboard = [
         [
@@ -163,24 +110,12 @@ def going(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
     query.answer()
 
-    chamada_fut = futs.find_one({"_id": "chamada_pro_fut"})
-    if chamada_fut == None:
-        print(confirmados)
-        update.message.reply_text('Não há nenhum Fut em aberto')
-        return ConversationHandler.END
-
-    confirmados = chamada_fut["confirmados"]
-    
     id_jogador = "@" + query.from_user.username
 
-    for confirmado in confirmados:
-        if confirmado == id_jogador:
-            return VEMPROFUT
+    confirmados = futdatabase.going_to_fut(id_jogador)
 
-    confirmados.append(id_jogador)
-    print(confirmados)
-
-    futs.update_one({"_id": "chamada_pro_fut"}, {"$set":{"confirmados": confirmados}})
+    if confirmados == None:
+        return ConversationHandler.END
 
     keyboard = [
         [
@@ -201,19 +136,12 @@ def not_going(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
     query.answer()
 
-    chamada_fut = futs.find_one({"_id": "chamada_pro_fut"})
-    if chamada_fut == None:
-        print(confirmados)
-        update.message.reply_text('Não há nenhum Fut em aberto')
-        return ConversationHandler.END
-
-    confirmados = chamada_fut["confirmados"]
-    
     id_jogador = "@" + query.from_user.username
 
-    confirmados.remove(id_jogador)
+    confirmados = futdatabase.not_going_to_fut(id_jogador)
 
-    futs.update_one({"_id": "chamada_pro_fut"}, {"$set":{"confirmados": confirmados}})
+    if confirmados == None:
+        return ConversationHandler.END
 
     keyboard = [
         [
@@ -229,17 +157,16 @@ def not_going(update: Update, context: CallbackContext) -> None:
 
     return VEMPROFUT
 
+
 def cancela_fut(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
     query.answer()
 
-    chamada_fut = futs.find_one({"_id": "chamada_pro_fut"})
-    if chamada_fut == None:
+    if not futdatabase.cancela_fut():
         update.message.reply_text('Não há nenhum Fut em aberto')
-        return ConversationHandler.END
-
-    futs.delete_one({"_id": "chamada_pro_fut"})
-    query.edit_message_text(text="O Fut foi cancelado")
+    else:
+        query.edit_message_text(text="O Fut foi cancelado")
+    
     return ConversationHandler.END
    
 
@@ -249,8 +176,6 @@ def echo(update: Update, context: CallbackContext) -> None:
 
 
 def main():
-
-    # TOKEN = "1009113288:AAFrUSq-UqGcQutLJAgsT6CZX-cREXB9hVk"
     TOKEN = passwords.TELEGRAM_TOKEN
 
     """Start the bot."""
