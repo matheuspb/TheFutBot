@@ -38,22 +38,6 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-# client = pymongo.MongoClient(passwords.MONGO_CLIENT_URL)
-# db = client["TheFutDatabase"]
-# jogadores = db["Jogadores"]
-# futs = db["Futs"]
-
-def init_chamada_fut():
-    chamada_fut = futs.find_one({"_id": "chamada_pro_fut"})
-    if chamada_fut != None:
-        return False
-    else:
-        pymongo_mensalistas = jogadores.find({"mensalista": True})
-        mensalistas = []
-        for pymongo_mensalista in pymongo_mensalistas:
-            print(pymongo_mensalista["_id"])
-            mensalistas.append(pymongo_mensalista["_id"])
-
 
 # Define a few command handlers. These usually take the two arguments update and
 # context. Error handlers also receive the raised TelegramError object in error.
