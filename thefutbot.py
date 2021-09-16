@@ -39,8 +39,16 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-# Define a few command handlers. These usually take the two arguments update and
-# context. Error handlers also receive the raised TelegramError object in error.
+keyboard_vemprofut = [
+    [
+        InlineKeyboardButton("✅ Vou", callback_data=str(GOING)),
+        InlineKeyboardButton("❌ Não vou", callback_data=str(NOTGOING))
+    ],
+    [InlineKeyboardButton("Fazer Times", callback_data=str(FAZERTIMES))],
+    [InlineKeyboardButton("⚠️ Cancelar o Fut ⚠️", callback_data=str(CANCELAFUT))],
+]
+
+
 def start(update: Update, context: CallbackContext) -> None:
     """Send a message when the command /start is issued."""
     update.message.reply_text('Hi!')
@@ -90,16 +98,10 @@ def c_diarista(update: Update, context: CallbackContext) -> None:
 
 
 def c_fut(update: Update, context: CallbackContext) -> None:
+
     confirmados = futdatabase.create_fut()
 
-    keyboard = [
-        [
-            InlineKeyboardButton("✅ Vou", callback_data=str(GOING)),
-            InlineKeyboardButton("❌ Não vou", callback_data=str(NOTGOING))
-        ],
-        [InlineKeyboardButton("⚠️ Cancelar o Fut ⚠️", callback_data=str(CANCELAFUT))],
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
+    reply_markup = InlineKeyboardMarkup(keyboard_vemprofut)
 
     update.message.reply_text(messages.vem_pro_fut_msg(confirmados), reply_markup=reply_markup)
 
@@ -117,15 +119,7 @@ def going(update: Update, context: CallbackContext) -> None:
     if confirmados == None:
         return ConversationHandler.END
 
-    keyboard = [
-        [
-            InlineKeyboardButton("✅ Vou", callback_data=str(GOING)),
-            InlineKeyboardButton("❌ Não vou", callback_data=str(NOTGOING))
-        ],
-        [InlineKeyboardButton("Fazer Times", callback_data=str(FAZERTIMES))],
-        [InlineKeyboardButton("⚠️ Cancelar o Fut ⚠️", callback_data=str(CANCELAFUT))],
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
+    reply_markup = InlineKeyboardMarkup(keyboard_vemprofut)
 
     query.edit_message_text(text=messages.vem_pro_fut_msg(confirmados), reply_markup=reply_markup)
 
@@ -143,15 +137,7 @@ def not_going(update: Update, context: CallbackContext) -> None:
     if confirmados == None:
         return ConversationHandler.END
 
-    keyboard = [
-        [
-            InlineKeyboardButton("✅ Vou", callback_data=str(GOING)),
-            InlineKeyboardButton("❌ Não vou", callback_data=str(NOTGOING))
-        ],
-        [InlineKeyboardButton("Fazer Times", callback_data=str(FAZERTIMES))],
-        [InlineKeyboardButton("⚠️ Cancelar o Fut ⚠️", callback_data=str(CANCELAFUT))],
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
+    reply_markup = InlineKeyboardMarkup(keyboard_vemprofut)
 
     query.edit_message_text(text=messages.vem_pro_fut_msg(confirmados), reply_markup=reply_markup)
 
