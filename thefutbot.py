@@ -180,9 +180,9 @@ def cancela_fut(update: Update, context: CallbackContext) -> None:
 
     if not futdatabase.cancela_fut():
         update.message.reply_text('Não há nenhum Fut em aberto')
-        return ConversationHandler.END
-
-    query.edit_message_text(text="O Fut foi cancelado")
+    else:
+        query.edit_message_text(text="O Fut foi cancelado")
+    
     return ConversationHandler.END
    
 
