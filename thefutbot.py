@@ -25,12 +25,6 @@ from pymongo import MongoClient
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import Updater, CommandHandler, ConversationHandler, MessageHandler, Filters, CallbackContext, CallbackQueryHandler
 
-# Estaǵios do Fut
-VEMPROFUT, FUTMARCADO = range(2)
-
-# Respostas para o Vem pro Fut
-GOING, NOTGOING, FAZERTIMES, CANCELAFUT = range(4)
-VOLTARPARALISTA, INFORMARPLACAR = range(2)
 
 
 # Enable logging
@@ -39,22 +33,6 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger(__name__)
-
-
-keyboard_vemprofut = [
-    [
-        InlineKeyboardButton("✅ Vou", callback_data=str(GOING)),
-        InlineKeyboardButton("❌ Não vou", callback_data=str(NOTGOING))
-    ],
-    [InlineKeyboardButton("Fazer Times ➡️", callback_data=str(FAZERTIMES))],
-    [InlineKeyboardButton("⚠️ Cancelar o Fut ⚠️", callback_data=str(CANCELAFUT))],
-]
-
-keyboard_times = [
-    [InlineKeyboardButton("↩️ Voltar à Lista", callback_data=str(VOLTARPARALISTA))],
-    # [InlineKeyboardButton("Informar Placar 📝 (WIP)", callback_data=str(INFORMARPLACAR))],
-    [InlineKeyboardButton("⚠️ Cancelar o Fut ⚠️", callback_data=str(CANCELAFUT))]
-]
 
 
 def start(update: Update, context: CallbackContext) -> None:
@@ -106,87 +84,60 @@ def c_diarista(update: Update, context: CallbackContext) -> None:
 
 
 def c_fut(update: Update, context: CallbackContext) -> None:
-
     confirmados = futdatabase.create_fut()
-
+    
     reply_markup = InlineKeyboardMarkup(keyboard_vemprofut)
-
-    message = update.message.reply_text(messages.vem_pro_fut_msg(confirmados), reply_markup=reply_markup)
-    print(message.message_id)
-
+    
+    message = update.message.reply_text(messages.vem_pro_fut_msg(confirmados))
+    
+    futdatabase.set_vemprofut_message_id(message.message_id)
+    
     return VEMPROFUT
 
 
-def going(update: Update, context: CallbackContext) -> None:
-    query = update.callback_query
-    query.answer()
-
-    id_jogador = "@" + query.from_user.username
+def c_going(update: Update, context: CallbackContext) -> None:
+    id_jogador = "@" + update.message.from_user.username
 
     confirmados = futdatabase.going_to_fut(id_jogador)
 
     if confirmados == None:
-        return ConversationHandler.END
+        update.message.reply_text("Não há nenhum Fut em aberto.")
+        return
 
-    reply_markup = InlineKeyboardMarkup(keyboard_vemprofut)
-
-    query.edit_message_text(text=messages.vem_pro_fut_msg(confirmados), reply_markup=reply_markup)
-
-    return VEMPROFUT
+    message_id = futdatabase.get_vemprofut_message_id()
+    context.bot.editMessageText(chat_id=update.message.chat_id, message_id=message_id, text=messages.vem_pro_fut_msg(confirmados))
 
 
-def not_going(update: Update, context: CallbackContext) -> None:
-    query = update.callback_query
-    query.answer()
-
-    id_jogador = "@" + query.from_user.username
+def c_notgoing(update: Update, context: CallbackContext) -> None:
+    id_jogador = "@" + update.message.from_user.username
 
     confirmados = futdatabase.not_going_to_fut(id_jogador)
 
     if confirmados == None:
-        return ConversationHandler.END
+        update.message.reply_text("Não há nenhum Fut em aberto.")
+        return
 
-    reply_markup = InlineKeyboardMarkup(keyboard_vemprofut)
-
-    query.edit_message_text(text=messages.vem_pro_fut_msg(confirmados), reply_markup=reply_markup)
-
-    return VEMPROFUT
+    message_id = futdatabase.get_vemprofut_message_id()
+    context.bot.editMessageText(chat_id=update.message.chat_id, message_id=message_id, text=messages.vem_pro_fut_msg(confirmados))
 
 
-def cancela_fut(update: Update, context: CallbackContext) -> None:
-    query = update.callback_query
-    query.answer()
-
+def c_cancela_fut(update: Update, context: CallbackContext) -> None:
+    message_id = futdatabase.get_vemprofut_message_id()
     if not futdatabase.cancela_fut():
         update.message.reply_text('Não há nenhum Fut em aberto')
     else:
-        query.edit_message_text(text="O Fut foi cancelado")
-    
-    return ConversationHandler.END
-   
+        context.bot.editMessageText(chat_id=update.message.chat_id, message_id=message_id, text='O Fut foi cancelado.')
 
-def fazer_times(update: Update, context: CallbackContext) -> None:
-    query = update.callback_query
-    query.answer()
 
+def c_times(update: Update, context: CallbackContext) -> None:
     times = futdatabase.fazer_times()
 
-    reply_markup = InlineKeyboardMarkup(keyboard_times)
+    if times == None:
+        update.message.reply_text("Não há nenhum Fut em aberto.")
+        return
 
-    query.edit_message_text(text=messages.times_msg(times), reply_markup=reply_markup)
-
-    return FUTMARCADO
-
-
-def voltar_para_lista(update: Update, context: CallbackContext) -> None:
-    query = update.callback_query
-    query.answer()
-    reply_markup = InlineKeyboardMarkup(keyboard_vemprofut)
-    
-    confirmados = futdatabase.get_confirmados()
-    
-    query.edit_message_text(messages.vem_pro_fut_msg(confirmados), reply_markup=reply_markup)
-    return VEMPROFUT
+    message_id = futdatabase.get_vemprofut_message_id()
+    context.bot.editMessageText(chat_id=update.message.chat_id, message_id=message_id, text=messages.times_msg(times))
 
 
 def echo(update: Update, context: CallbackContext) -> None:
@@ -213,25 +164,11 @@ def main():
     dispatcher.add_handler(CommandHandler("goleiro", c_goleiro))
     dispatcher.add_handler(CommandHandler("mensalista", c_mensalista))
     dispatcher.add_handler(CommandHandler("diarista", c_diarista))
-
-    fut_conv_handler = ConversationHandler(
-        entry_points=[CommandHandler('vemprofut', c_fut)],
-        states={
-            VEMPROFUT: [
-                CallbackQueryHandler(going, pattern='^' + str(GOING) + '$'),
-                CallbackQueryHandler(not_going, pattern='^' + str(NOTGOING) + '$'),
-                CallbackQueryHandler(cancela_fut, pattern='^' + str(CANCELAFUT) + '$'),
-                CallbackQueryHandler(fazer_times, pattern='^' + str(FAZERTIMES) + '$')
-            ],
-            FUTMARCADO: [
-                CallbackQueryHandler(voltar_para_lista, pattern='^' + str(VOLTARPARALISTA) + '$'),
-                # CallbackQueryHandler(end, pattern='^' + str(TWO) + '$'),
-                CallbackQueryHandler(cancela_fut, pattern='^' + str(CANCELAFUT) + '$'),
-            ],
-        },
-        fallbacks=[CommandHandler('vemprofut', c_fut)],
-    )
-    dispatcher.add_handler(fut_conv_handler)
+    dispatcher.add_handler(CommandHandler("going", c_going))
+    dispatcher.add_handler(CommandHandler("notgoing", c_notgoing))
+    dispatcher.add_handler(CommandHandler("times", c_times))
+    dispatcher.add_handler(CommandHandler("vemprofut", c_fut))
+    dispatcher.add_handler(CommandHandler("cancelafut", c_cancela_fut))
 
     # on noncommand i.e message - echo the message on Telegram
     # dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, echo))
