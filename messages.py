@@ -9,3 +9,29 @@ def vem_pro_fut_msg(confirmados):
 {confirmados_string}
 Mensalistas são automaticamente confirmados para cada Fut.
 """
+
+def times_msg(times):
+    home_string = ""
+    if times[0]["goleiro"] != None:
+        home_string = home_string + ("🧤" + times[0]["goleiro"] + "\n")
+    for jogador_home in times[0]["jogadores"]:
+        if jogador_home != times[0]["goleiro"]:
+            home_string = home_string + (jogador_home + "\n")
+
+    away_string = ""
+    if times[1]["goleiro"] != None:
+        away_string = away_string + ("🧤" + times[1]["goleiro"] + "\n")
+    for jogador_away in times[1]["jogadores"]:
+        if jogador_away != times[1]["goleiro"]:
+            away_string = away_string + (jogador_away + "\n")
+
+    return f"""Home 🟥  🆚  🟨 Away 
+
+Home 🟥     ⚽️{times[0]["rank"]}
+{home_string}
+Away 🟨     ⚽️{times[1]["rank"]}
+{away_string}
+
+Jogadores do time Home não se esqueçam de trazer a peita VERMELHA 🟥
+Jogadores do time Away não se esqueçam de trazer a peita AMARELA 🟨
+"""
