@@ -30,6 +30,8 @@ VEMPROFUT, FUTMARCADO = range(2)
 
 # Respostas para o Vem pro Fut
 GOING, NOTGOING, FAZERTIMES, CANCELAFUT = range(4)
+VOLTARPARALISTA, INFORMARPLACAR = range(2)
+
 
 # Enable logging
 logging.basicConfig(
@@ -44,8 +46,14 @@ keyboard_vemprofut = [
         InlineKeyboardButton("✅ Vou", callback_data=str(GOING)),
         InlineKeyboardButton("❌ Não vou", callback_data=str(NOTGOING))
     ],
-    [InlineKeyboardButton("Fazer Times", callback_data=str(FAZERTIMES))],
+    [InlineKeyboardButton("Fazer Times ➡️", callback_data=str(FAZERTIMES))],
     [InlineKeyboardButton("⚠️ Cancelar o Fut ⚠️", callback_data=str(CANCELAFUT))],
+]
+
+keyboard_times = [
+    [InlineKeyboardButton("↩️ Voltar à Lista", callback_data=str(VOLTARPARALISTA))],
+    # [InlineKeyboardButton("Informar Placar 📝 (WIP)", callback_data=str(INFORMARPLACAR))],
+    [InlineKeyboardButton("⚠️ Cancelar o Fut ⚠️", callback_data=str(CANCELAFUT))]
 ]
 
 
@@ -103,7 +111,8 @@ def c_fut(update: Update, context: CallbackContext) -> None:
 
     reply_markup = InlineKeyboardMarkup(keyboard_vemprofut)
 
-    update.message.reply_text(messages.vem_pro_fut_msg(confirmados), reply_markup=reply_markup)
+    message = update.message.reply_text(messages.vem_pro_fut_msg(confirmados), reply_markup=reply_markup)
+    print(message.message_id)
 
     return VEMPROFUT
 
@@ -156,6 +165,30 @@ def cancela_fut(update: Update, context: CallbackContext) -> None:
     return ConversationHandler.END
    
 
+def fazer_times(update: Update, context: CallbackContext) -> None:
+    query = update.callback_query
+    query.answer()
+
+    times = futdatabase.fazer_times()
+
+    reply_markup = InlineKeyboardMarkup(keyboard_times)
+
+    query.edit_message_text(text=messages.times_msg(times), reply_markup=reply_markup)
+
+    return FUTMARCADO
+
+
+def voltar_para_lista(update: Update, context: CallbackContext) -> None:
+    query = update.callback_query
+    query.answer()
+    reply_markup = InlineKeyboardMarkup(keyboard_vemprofut)
+    
+    confirmados = futdatabase.get_confirmados()
+    
+    query.edit_message_text(messages.vem_pro_fut_msg(confirmados), reply_markup=reply_markup)
+    return VEMPROFUT
+
+
 def echo(update: Update, context: CallbackContext) -> None:
     """Echo the user message."""
     update.message.reply_text(update.message.text)
@@ -187,12 +220,14 @@ def main():
             VEMPROFUT: [
                 CallbackQueryHandler(going, pattern='^' + str(GOING) + '$'),
                 CallbackQueryHandler(not_going, pattern='^' + str(NOTGOING) + '$'),
-                CallbackQueryHandler(cancela_fut, pattern='^' + str(CANCELAFUT) + '$')
-            ]
-            # FUTMARCADO: [
-            #     CallbackQueryHandler(start_over, pattern='^' + str(ONE) + '$'),
-            #     CallbackQueryHandler(end, pattern='^' + str(TWO) + '$'),
-            # ],
+                CallbackQueryHandler(cancela_fut, pattern='^' + str(CANCELAFUT) + '$'),
+                CallbackQueryHandler(fazer_times, pattern='^' + str(FAZERTIMES) + '$')
+            ],
+            FUTMARCADO: [
+                CallbackQueryHandler(voltar_para_lista, pattern='^' + str(VOLTARPARALISTA) + '$'),
+                # CallbackQueryHandler(end, pattern='^' + str(TWO) + '$'),
+                CallbackQueryHandler(cancela_fut, pattern='^' + str(CANCELAFUT) + '$'),
+            ],
         },
         fallbacks=[CommandHandler('vemprofut', c_fut)],
     )
