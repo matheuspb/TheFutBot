@@ -77,7 +77,6 @@ def convert_to_diarista(id_jogador):
 
 
 def create_fut():
-
     chamada_fut = tb_futs.find_one({"_id": "chamada_pro_fut"})
     if chamada_fut == None:
         mensalistas_in_db = tb_jogadores.find({"mensalista": True})
@@ -87,7 +86,7 @@ def create_fut():
 
         tb_futs.insert_one({
             "_id": "chamada_pro_fut",
-            "message_id": None
+            "message_id": None,
             "confirmados": mensalistas,
             "times":{
                 "home":[],
@@ -100,6 +99,14 @@ def create_fut():
 
     return confirmados
 
+
+def set_vemprofut_message_id(message_id):
+    chamada_fut = tb_futs.find_one({"_id": "chamada_pro_fut"})
+    tb_futs.update_one({"_id": "chamada_pro_fut"}, {"$set":{"message_id": message_id}})
+
+def get_vemprofut_message_id():
+    chamada_fut = tb_futs.find_one({"_id": "chamada_pro_fut"})
+    return None if chamada_fut == None else chamada_fut["message_id"]
 
 def cancela_fut():
 

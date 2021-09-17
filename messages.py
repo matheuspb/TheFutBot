@@ -7,7 +7,11 @@ def vem_pro_fut_msg(confirmados):
 
 {len(confirmados)} Confirmados:
 {confirmados_string}
+
+Para marcar ou desmarcar presença no fut, use os comandos /going e /notgoing, respectivamente.
 Mensalistas são automaticamente confirmados para cada Fut.
+
+Quando estiverem prontos, use o comando /times para criar os times.
 """
 
 def times_msg(times):
@@ -34,4 +38,6 @@ Away 🟨     ⚽️{times[1]["rank"]}
 
 Jogadores do time Home não se esqueçam de trazer a peita VERMELHA 🟥
 Jogadores do time Away não se esqueçam de trazer a peita AMARELA 🟨
+
+Jogadores ainda podem marcar e desmarcar presença no Fut com os comandos /going e /notgoing
 """
