@@ -14,6 +14,7 @@ Press Ctrl-C on the command line or send a signal to the process to stop the
 bot.
 """
 
+from re import match
 from typing import Pattern
 import futdatabase
 import passwords
@@ -33,6 +34,8 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger(__name__)
+
+PLACARINPUT = range(1)
 
 
 def start(update: Update, context: CallbackContext) -> None:
@@ -86,8 +89,6 @@ def c_diarista(update: Update, context: CallbackContext) -> None:
 def c_fut(update: Update, context: CallbackContext) -> None:
     confirmados = futdatabase.create_fut()
     
-    reply_markup = InlineKeyboardMarkup(keyboard_vemprofut)
-    
     message = update.message.reply_text(messages.vem_pro_fut_msg(confirmados))
     
     futdatabase.set_vemprofut_message_id(message.message_id)
@@ -139,6 +140,38 @@ def c_times(update: Update, context: CallbackContext) -> None:
     message_id = futdatabase.get_vemprofut_message_id()
     context.bot.editMessageText(chat_id=update.message.chat_id, message_id=message_id, text=messages.times_msg(times))
 
+def c_placar(update: Update, context: CallbackContext) -> None:
+    message = update.message.reply_text(messages.placar_input_msg(futdatabase.home_placar, futdatabase.away_placar, False))
+    futdatabase.placar_message_id = message.message_id
+
+    return PLACARINPUT
+
+
+def placar_response(update: Update, context: CallbackContext) -> int:
+    text = int(update.message.text)
+    print(f"Placar response: {text}")
+    if futdatabase.home_placar == None:
+        futdatabase.home_placar = text
+        context.bot.editMessageText(chat_id=update.message.chat_id, message_id=futdatabase.placar_message_id, text=messages.placar_input_msg(futdatabase.home_placar, futdatabase.away_placar, False))
+        return PLACARINPUT
+    else:
+        futdatabase.away_placar = text
+        
+        match_results = {
+            "placar":[futdatabase.home_placar, futdatabase.away_placar],
+            "times": futdatabase.get_times()
+        }
+
+        context.bot.editMessageText(chat_id=update.message.chat_id, message_id=futdatabase.placar_message_id, text=messages.match_results_msg(match_results))
+        
+        futdatabase.register_match()
+
+        futdatabase.home_placar = None
+        futdatabase.away_placar = None
+        
+        return ConversationHandler.END
+
+
 
 def echo(update: Update, context: CallbackContext) -> None:
     """Echo the user message."""
@@ -169,6 +202,20 @@ def main():
     dispatcher.add_handler(CommandHandler("times", c_times))
     dispatcher.add_handler(CommandHandler("vemprofut", c_fut))
     dispatcher.add_handler(CommandHandler("cancelafut", c_cancela_fut))
+
+
+    conv_handler = ConversationHandler(
+        entry_points=[CommandHandler('placar', c_placar)],
+        states={
+            PLACARINPUT: [
+                MessageHandler(Filters.regex('^[0-9]+$'), placar_response)
+            ],
+        },
+        fallbacks=[MessageHandler(Filters.text, placar_response)],
+    )
+
+    dispatcher.add_handler(conv_handler)
+
 
     # on noncommand i.e message - echo the message on Telegram
     # dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, echo))

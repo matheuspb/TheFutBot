@@ -1,6 +1,7 @@
 
 # type: ignore[union-attr]
 
+from messages import match_results_msg
 import passwords
 import random
 import pymongo
@@ -10,6 +11,10 @@ client = pymongo.MongoClient(passwords.MONGO_CLIENT_URL)
 db = client["TheFutDatabase"]
 tb_jogadores = db["Jogadores"]
 tb_futs = db["Futs"]
+
+home_placar = None
+away_placar = None
+placar_message_id = None
 
 
 class TeamBuilderJogador:
@@ -195,8 +200,6 @@ def fazer_times():
         times[id_time].peita_credits += confirmado.peita_credits
         times[id_time].goleiro = confirmado.id_jogador
 
-        print(f"Adicionando {confirmado.id_jogador} ao Time {id_time} como goleiro")
-
     for confirmado in confirmados:
         if confirmado.goleiro:
             continue
@@ -213,13 +216,8 @@ def fazer_times():
         times[id_time].rank += confirmado.rank
         times[id_time].peita_credits += confirmado.peita_credits
 
-        print(f"Adicionando {confirmado.id_jogador} ao Time {id_time}")
-
     for time in times:
         time.jogadores.sort()
-
-    print(f'Time 0 ({len(times[0].jogadores)}): {times[0].jogadores}, Rank: {times[0].rank}, Peita Credits: {times[0].peita_credits},')
-    print(f'Time 1 ({len(times[1].jogadores)}): {times[1].jogadores}, Rank: {times[1].rank}, Peita Credits: {times[1].peita_credits},')
 
     home_id = 0
     away_id = 1
@@ -238,9 +236,75 @@ def fazer_times():
         "jogadores": times[away_id].jogadores
     }
 
-    print(f'Home: {home}')
-    print(f'Away: {away}')
-
     tb_futs.update_one({"_id": "chamada_pro_fut"}, {"$set":{"times": {"home": home["jogadores"], "away": away["jogadores"]}}})
 
     return [home, away]
+
+def get_times():
+    chamada_fut = tb_futs.find_one({"_id": "chamada_pro_fut"})
+    
+    if chamada_fut == None:
+        return None
+
+    return [chamada_fut["times"]["home"],chamada_fut["times"]["home"]]
+
+
+def register_match():
+    chamada_fut = tb_futs.find_one({"_id": "chamada_pro_fut"})
+    
+    if chamada_fut == None:
+        return False
+
+    tb_futs.insert_one({
+        "times":{
+            "home":chamada_fut["times"]["home"],
+            "away":chamada_fut["times"]["away"],
+        },
+        "placar":{
+            "home": home_placar,
+            "away": away_placar,
+        }
+    })
+
+    for id_jogador_home in chamada_fut["times"]["home"]:
+        update_jogador(id_jogador_home, home_placar, away_placar, True)
+    for id_jogador_away in chamada_fut["times"]["away"]:
+        update_jogador(id_jogador_away, home_placar, away_placar, False)
+    
+    # away_placar = None
+    # home_placar = None
+    match_results_msg = None
+    cancela_fut()
+
+def update_jogador(id_jogador, home_placar, away_placar, is_jogador_home):
+    jogador_in_tb = tb_jogadores.find_one({"_id": id_jogador})
+    
+    # Calcula novo rank
+    rank_to_add = 0
+
+    if home_placar > away_placar:
+        rank_to_add += 50
+    elif home_placar < away_placar:
+        rank_to_add -= 50
+
+    rank_to_add += (home_placar - away_placar) * 10
+    
+    if not is_jogador_home:
+        rank_to_add *= -1
+
+    new_rank = jogador_in_tb["rank"] + rank_to_add
+
+    tb_jogadores.update_one({"_id": id_jogador}, {"$set":{
+        "rank": new_rank,
+        "peita_credits": jogador_in_tb["peita_credits"] + (1 if is_jogador_home else -1),
+        "partidas": {
+            "total": jogador_in_tb["partidas"]["total"] + 1,
+            "vitorias": (jogador_in_tb["partidas"]["vitorias"] + 1) if home_placar > away_placar and is_jogador_home or home_placar < away_placar and not is_jogador_home else jogador_in_tb["partidas"]["vitorias"],
+            "empates": (jogador_in_tb["partidas"]["empates"] + 1) if home_placar == away_placar else jogador_in_tb["partidas"]["empates"],
+            "derrotas": (jogador_in_tb["partidas"]["derrotas"] + 1) if home_placar < away_placar and is_jogador_home or home_placar > away_placar and not is_jogador_home else jogador_in_tb["partidas"]["derrotas"]
+        },
+        "saldo_gols": {
+            "gols_feitos": jogador_in_tb["saldo_gols"]["gols_feitos"] + (home_placar if is_jogador_home else away_placar),
+            "gols_sofridos": jogador_in_tb["saldo_gols"]["gols_feitos"] + (home_placar if not is_jogador_home else away_placar)
+        }
+        }})
