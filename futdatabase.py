@@ -1,7 +1,6 @@
 # type: ignore[union-attr]
 
 from messages import match_results_msg
-# import passwords
 import random
 import pymongo
 from pymongo import MongoClient
@@ -14,7 +13,6 @@ import os
 load_dotenv()
 
 client = pymongo.MongoClient(os.getenv('MONGO_CLIENT_URL'))
-# client = pymongo.MongoClient(passwords.MONGO_CLIENT_URL)
 db = client["TheFutDatabase"]
 tb_jogadores = db["Jogadores"]
 tb_futs = db["Futs"]
