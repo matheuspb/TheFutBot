@@ -1,13 +1,20 @@
-
 # type: ignore[union-attr]
 
 from messages import match_results_msg
-import passwords
+# import passwords
 import random
 import pymongo
 from pymongo import MongoClient
 
-client = pymongo.MongoClient(passwords.MONGO_CLIENT_URL)
+# Read .env file
+from dotenv import load_dotenv
+import os
+
+
+load_dotenv()
+
+client = pymongo.MongoClient(os.getenv('MONGO_CLIENT_URL'))
+# client = pymongo.MongoClient(passwords.MONGO_CLIENT_URL)
 db = client["TheFutDatabase"]
 tb_jogadores = db["Jogadores"]
 tb_futs = db["Futs"]
@@ -191,7 +198,7 @@ def fazer_times():
     confirmados.sort(key=lambda x: x.rank, reverse=True)
 
     for confirmado in confirmados:
-        if not confirmado.goleiro:
+        if not confirmado.goleiro or (len(times[0].jogadores) > 0 and len(times[1].jogadores) > 0):
             continue
 
         id_time = 0 if len(times[0].jogadores) == 0 else 1
@@ -201,13 +208,13 @@ def fazer_times():
         times[id_time].goleiro = confirmado.id_jogador
 
     for confirmado in confirmados:
-        if confirmado.goleiro:
+        if confirmado.id_jogador == times[0].goleiro or confirmado.id_jogador == times[1].goleiro:
             continue
         
         id_time = 0
-        if len(times[0].jogadores) == limite_jogadores and len(times[1].jogadores) < limite_jogadores:
+        if len(times[0].jogadores) >= limite_jogadores and len(times[1].jogadores) < limite_jogadores:
             id_time = 1
-        elif len(times[1].jogadores) == limite_jogadores and len(times[0].jogadores) < limite_jogadores:
+        elif len(times[1].jogadores) >= limite_jogadores and len(times[0].jogadores) < limite_jogadores:
             id_time = 0
         else:
             id_time = 0 if times[0].rank <= times[1].rank else 1

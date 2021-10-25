@@ -17,7 +17,6 @@ bot.
 from re import match
 from typing import Pattern
 import futdatabase
-import passwords
 import messages
 import logging
 import pymongo
@@ -26,6 +25,9 @@ from pymongo import MongoClient
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import Updater, CommandHandler, ConversationHandler, MessageHandler, Filters, CallbackContext, CallbackQueryHandler
 
+# Read .env file
+from dotenv import load_dotenv
+import os
 
 
 # Enable logging
@@ -92,8 +94,6 @@ def c_fut(update: Update, context: CallbackContext) -> None:
     message = update.message.reply_text(messages.vem_pro_fut_msg(confirmados))
     
     futdatabase.set_vemprofut_message_id(message.message_id)
-    
-    return VEMPROFUT
 
 
 def c_going(update: Update, context: CallbackContext) -> None:
@@ -179,7 +179,10 @@ def echo(update: Update, context: CallbackContext) -> None:
 
 
 def main():
-    TOKEN = passwords.TELEGRAM_TOKEN
+    
+    load_dotenv()
+
+    TOKEN = os.getenv('TELEGRAM_TOKEN')
 
     """Start the bot."""
     # Create the Updater and pass it your bot's token.
