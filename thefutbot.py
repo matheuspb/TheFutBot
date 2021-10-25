@@ -124,8 +124,10 @@ def c_notgoing(update: Update, context: CallbackContext) -> None:
     context.bot.editMessageText(chat_id=update.message.chat_id, message_id=message_id, text=messages.vem_pro_fut_msg(confirmados))
 
 
-def c_convidado(update: Update, context: CallbackContext) -> None:
+def c_invite(update: Update, context: CallbackContext) -> None:
     message = update.message.reply_text("Informe o nome do convidado")
+    futdatabase.convidado_message_id = message.message_id
+    
     return CONVIDADO_POSICAO
 
 def convidado_response_posicao(update: Update, context: CallbackContext) -> int:
@@ -136,6 +138,8 @@ def convidado_response_posicao(update: Update, context: CallbackContext) -> int:
     ]
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
 
+    # context.bot.editMessageText(chat_id=update.message.chat_id, message_id=futdatabase.convidado_message_id, text=(f"{futdatabase.convidado_nome} joga em que posição?",reply_markup=markup))
+        
     update.message.reply_text(f"{futdatabase.convidado_nome} joga em que posição?",reply_markup=markup)
 
     return CONVIDADO_RANK
@@ -307,7 +311,7 @@ def main():
     dispatcher.add_handler(conv_handler_placar)
 
     conv_handler_convidado = ConversationHandler(
-        entry_points=[CommandHandler('invite', c_convidado)],
+        entry_points=[CommandHandler('invite', c_invite)],
         states={
             CONVIDADO_POSICAO: [
                 MessageHandler(Filters.text, convidado_response_posicao)

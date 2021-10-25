@@ -20,6 +20,7 @@ tb_futs = db["Futs"]
 home_placar = None
 away_placar = None
 placar_message_id = None
+convidado_message_id = None
 
 convidado_nome = ''
 convidado_rank = 0
@@ -50,7 +51,7 @@ def add_jogador(id_jogador, goleiro):
             "_id": id_jogador,
             "mensalista": False,
             "goleiro": goleiro,
-            "rank": random.randint(0,1000),
+            "rank": 500,
             "partidas": {
                 "total": 0,
                 "vitorias": 0,
@@ -61,7 +62,7 @@ def add_jogador(id_jogador, goleiro):
                 "gols_feitos": 0,
                 "gols_sofridos": 0
             },
-            "peita_credits": random.randint(0,3)
+            "peita_credits": 0
             })
         return True
     else:
