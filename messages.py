@@ -39,7 +39,9 @@ Away 🟨     ⚽️{times[1]["rank"]}
 Jogadores do time Home não se esqueçam de trazer a peita VERMELHA 🟥
 Jogadores do time Away não se esqueçam de trazer a peita AMARELA 🟨
 
-Jogadores ainda podem marcar e desmarcar presença no Fut com os comandos /going e /notgoing
+Jogadores ainda podem marcar e desmarcar presença no Fut com os comandos /going e /notgoing e o Fut ainda pode ser  cancelado com o comando /cancelafut
+
+Após o Fut, informe o placar com o comando /placar
 """
 
 def placar_input_msg(placar_home, placar_away, error):
