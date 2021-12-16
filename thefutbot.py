@@ -40,6 +40,7 @@ logger = logging.getLogger(__name__)
 PLACARINPUT = range(1)
 CONVIDADO_POSICAO, CONVIDADO_RANK, CONVIDADO_FINISH = range(3)
 CONVIDADO_DELETE = range(1)
+CONVIDADO_GOING = range(1)
 
 
 def start(update: Update, context: CallbackContext) -> None:
@@ -124,27 +125,63 @@ def c_notgoing(update: Update, context: CallbackContext) -> None:
     context.bot.editMessageText(chat_id=update.message.chat_id, message_id=message_id, text=messages.vem_pro_fut_msg(confirmados))
 
 
-def c_invite(update: Update, context: CallbackContext) -> None:
+def c_going_convidado(update: Update, context: CallbackContext) -> None:
+    nomes_convidados = futdatabase.get_convidados_nomes()
+    reply_keyboard = []
+    for nome_convidado in nomes_convidados:
+        reply_keyboard.append([nome_convidado])
+
+    markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
+    
+    update.message.reply_text("Selecione o convidado que você quer confirmar",reply_markup=markup)
+
+    return CONVIDADO_GOING
+
+
+def r_going_convidado_finish(update: Update, context: CallbackContext) -> int:
+    id_jogador = update.message.text
+    
+    print(f'Convidado indo: {id_jogador}')
+
+    confirmados = futdatabase.going_to_fut(id_jogador)
+
+    if confirmados == None:
+        update.message.reply_text("Não há nenhum Fut em aberto.")
+        return
+
+    message_id = futdatabase.get_vemprofut_message_id()
+    context.bot.editMessageText(chat_id=update.message.chat_id, message_id=message_id, text=messages.vem_pro_fut_msg(confirmados))
+
+    update.message.reply_text(f'{futdatabase.convidado_nome} confirmado',reply_markup=ReplyKeyboardRemove())
+
+    return ConversationHandler.END
+
+
+def c_convidado(update: Update, context: CallbackContext) -> None:
     message = update.message.reply_text("Informe o nome do convidado")
     futdatabase.convidado_message_id = message.message_id
     
     return CONVIDADO_POSICAO
 
-def convidado_response_posicao(update: Update, context: CallbackContext) -> int:
+def r_convidado_posicao(update: Update, context: CallbackContext) -> int:
+    convidado_nome = update.message.text
+    
+    if futdatabase.get_jogador_by_id(convidado_nome) != None:
+        update.message.reply_text(f"Já existe um jogador com nome {futdatabase.convidado_nome} cadastrado")
+        return ConversationHandler.END
+    
     futdatabase.convidado_nome = update.message.text
     reply_keyboard = [
         ['Goleiro'],
         ['Linha'],
     ]
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
-
-    # context.bot.editMessageText(chat_id=update.message.chat_id, message_id=futdatabase.convidado_message_id, text=(f"{futdatabase.convidado_nome} joga em que posição?",reply_markup=markup))
-        
+    
     update.message.reply_text(f"{futdatabase.convidado_nome} joga em que posição?",reply_markup=markup)
 
     return CONVIDADO_RANK
 
-def convidado_response_rank(update: Update, context: CallbackContext) -> int:
+def r_convidado_rank(update: Update, context: CallbackContext) -> int:
     text_posicao = update.message.text
     if text_posicao == 'Goleiro':
         futdatabase.convidado_goleiro = True
@@ -166,7 +203,7 @@ def convidado_response_rank(update: Update, context: CallbackContext) -> int:
     return CONVIDADO_FINISH
 
 
-def convidado_response_finish(update: Update, context: CallbackContext) -> int:
+def r_convidado_finish(update: Update, context: CallbackContext) -> int:
     text_rank = update.message.text
     if text_rank == '🥇 Brabo':
         futdatabase.convidado_rank = 0.75
@@ -175,41 +212,9 @@ def convidado_response_finish(update: Update, context: CallbackContext) -> int:
     else:
         futdatabase.convidado_rank = 0.25
 
-    confirmados = futdatabase.invite()
-
-    message_id = futdatabase.get_vemprofut_message_id()
-    context.bot.editMessageText(chat_id=update.message.chat_id, message_id=message_id, text=messages.vem_pro_fut_msg(confirmados))
+    futdatabase.add_convidado()
 
     update.message.reply_text(f'Adicionado o convidado {futdatabase.convidado_nome}',reply_markup=ReplyKeyboardRemove())
-
-    return ConversationHandler.END
-
-
-def c_uninvite(update: Update, context: CallbackContext) -> None:
-    convidados = futdatabase.get_convidados_nomes()
-    if convidados == None:
-        update.message.reply_text('Não há nenhum Fut em aberto')
-        return ConversationHandler.END
-    
-    reply_keyboard = []
-    for convidado in convidados:
-        reply_keyboard.append([convidado])
-    markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
-
-    update.message.reply_text(f"Qual convidado você gostaria de desconvidar?",reply_markup=markup)
-
-    return CONVIDADO_DELETE
-
-
-def convidado_responde_delete(update: Update, context: CallbackContext) -> int:
-    nome_conv = update.message.text
-
-    confirmados = futdatabase.uninvite(nome_conv)
-
-    message_id = futdatabase.get_vemprofut_message_id()
-    context.bot.editMessageText(chat_id=update.message.chat_id, message_id=message_id, text=messages.vem_pro_fut_msg(confirmados))
-    
-    update.message.reply_text(f'{nome_conv} desconvidado',reply_markup=ReplyKeyboardRemove())
 
     return ConversationHandler.END
 
@@ -239,7 +244,7 @@ def c_placar(update: Update, context: CallbackContext) -> None:
     return PLACARINPUT
 
 
-def placar_response(update: Update, context: CallbackContext) -> int:
+def r_placar(update: Update, context: CallbackContext) -> int:
     text = int(update.message.text)
     print(f"Placar response: {text}")
     if futdatabase.home_placar == None:
@@ -262,7 +267,6 @@ def placar_response(update: Update, context: CallbackContext) -> int:
         futdatabase.away_placar = None
         
         return ConversationHandler.END
-
 
 
 def echo(update: Update, context: CallbackContext) -> None:
@@ -303,40 +307,40 @@ def main():
         entry_points=[CommandHandler('placar', c_placar)],
         states={
             PLACARINPUT: [
-                MessageHandler(Filters.regex('^[0-9]+$'), placar_response)
+                MessageHandler(Filters.regex('^[0-9]+$'), r_placar)
             ],
         },
-        fallbacks=[MessageHandler(Filters.text, placar_response)],
+        fallbacks=[MessageHandler(Filters.text, r_placar)],
     )
     dispatcher.add_handler(conv_handler_placar)
 
     conv_handler_convidado = ConversationHandler(
-        entry_points=[CommandHandler('invite', c_invite)],
+        entry_points=[CommandHandler('convidado', c_convidado)],
         states={
             CONVIDADO_POSICAO: [
-                MessageHandler(Filters.text, convidado_response_posicao)
+                MessageHandler(Filters.text, r_convidado_posicao)
             ],
             CONVIDADO_RANK: [
-                MessageHandler(Filters.text, convidado_response_rank)
+                MessageHandler(Filters.text, r_convidado_rank)
             ],
             CONVIDADO_FINISH: [
-                MessageHandler(Filters.text, convidado_response_finish)
+                MessageHandler(Filters.text, r_convidado_finish)
             ],
         },
-        fallbacks=[MessageHandler(Filters.text, convidado_response_posicao)],
+        fallbacks=[MessageHandler(Filters.text, r_convidado_posicao)],
     )
     dispatcher.add_handler(conv_handler_convidado)
 
-    conv_handler_uninvite = ConversationHandler(
-        entry_points=[CommandHandler('uninvite', c_uninvite)],
+    conv_handler_convidado_going = ConversationHandler(
+        entry_points=[CommandHandler('going_convidado', c_going_convidado)],
         states={
-            CONVIDADO_DELETE: [
-                MessageHandler(Filters.text, convidado_responde_delete)
+            CONVIDADO_GOING: [
+                MessageHandler(Filters.text, r_going_convidado_finish)
             ],
         },
-        fallbacks=[MessageHandler(Filters.text, convidado_responde_delete)],
+        fallbacks=[MessageHandler(Filters.text, r_going_convidado_finish)],
     )
-    dispatcher.add_handler(conv_handler_uninvite)
+    dispatcher.add_handler(conv_handler_convidado_going)
 
 
     # on noncommand i.e message - echo the message on Telegram
