@@ -104,7 +104,6 @@ tinycss2==1.0.2
 tornado==6.1
 typing-extensions==3.7.4.3
 tzlocal==2.1
-ubuntu-drivers-common==0.0.0
 ufw==0.36
 Unidecode==1.1.1
 urllib3==1.25.8
