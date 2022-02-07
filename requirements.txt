@@ -106,7 +106,6 @@ typing-extensions==3.7.4.3
 tzlocal==2.1
 Unidecode==1.1.1
 urllib3==1.25.8
-vboxapi==1.0
 virtualenv==20.4.4
 wadllib==1.3.3
 webencodings==0.5.1
