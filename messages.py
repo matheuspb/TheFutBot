@@ -57,9 +57,9 @@ def match_results_msg(match_results):
     rank_str = ""
     
     if match_results["placar"][0] > match_results["placar"][1]:
-        rank_str = "Jogadores do time 🟥 Home ganharam ⚽️{0}.\nJogadores do time 🟨 Away perderam ⚽️{0}.".format(50 + (match_results["placar"][0] - match_results["placar"][1]) * 10)
+        rank_str = "Jogadores do time 🟥 Home ganharam ⚽️{0}.\nJogadores do time 🟨 Away perderam ⚽️{0}.".format((match_results["placar"][0] - match_results["placar"][1]) * 10)
     elif match_results["placar"][0] < match_results["placar"][1]:
-        rank_str = "Jogadores do time 🟨 Away ganharam ⚽️{0}.\nJogadores do time 🟥 Home perderam ⚽️{0}.".format(50 + (match_results["placar"][1] - match_results["placar"][0]) * 10)
+        rank_str = "Jogadores do time 🟨 Away ganharam ⚽️{0}.\nJogadores do time 🟥 Home perderam ⚽️{0}.".format((match_results["placar"][1] - match_results["placar"][0]) * 10)
     else:
         rank_str = "Os ranks permanecem os mesmos."
 

@@ -361,10 +361,10 @@ def update_jogador(id_jogador, home_placar, away_placar, is_jogador_home):
     # Calcula novo rank
     rank_to_add = 0
 
-    if home_placar > away_placar:
-        rank_to_add += 50
-    elif home_placar < away_placar:
-        rank_to_add -= 50
+    # if home_placar > away_placar:
+    #     rank_to_add += 50
+    # elif home_placar < away_placar:
+    #     rank_to_add -= 50
 
     rank_to_add += (home_placar - away_placar) * 10
     
