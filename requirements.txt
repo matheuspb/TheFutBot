@@ -1,7 +1,6 @@
 apache-beam==2.28.0
 appdirs==1.4.4
 APScheduler==3.6.3
-apturl==0.5.2
 attrs==19.3.0
 avro-python3==1.9.2.1
 beautifulsoup4==4.8.2
