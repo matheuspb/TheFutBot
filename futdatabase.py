@@ -276,7 +276,7 @@ def fazer_times():
         id_time = 0 if len(times[0].jogadores) == 0 else 1
         times[id_time].jogadores.append(confirmado.id_jogador)
         times[id_time].rank += confirmado.rank
-        times[id_time].peita_credits += confirmado.peita_credits
+        # times[id_time].peita_credits += confirmado.peita_credits
         times[id_time].goleiro = confirmado.id_jogador
 
     for confirmado in confirmados:
@@ -293,7 +293,8 @@ def fazer_times():
         
         times[id_time].jogadores.append(confirmado.id_jogador)
         times[id_time].rank += confirmado.rank
-        times[id_time].peita_credits += confirmado.peita_credits
+        if confirmado.id_jogador[:1] == '@':
+            times[id_time].peita_credits += confirmado.peita_credits
 
     for time in times:
         time.jogadores.sort()
@@ -374,8 +375,8 @@ def update_jogador(id_jogador, home_placar, away_placar, is_jogador_home):
     new_rank = jogador_in_tb["rank"] + rank_to_add
 
     tb_jogadores.update_one({"_id": id_jogador}, {"$set":{
-        "rank": new_rank,
-        "peita_credits": jogador_in_tb["peita_credits"] + (1 if is_jogador_home else -1),
+        "rank": new_rank,   
+        "peita_credits": (jogador_in_tb["peita_credits"] + (1 if is_jogador_home else -1)) if id_jogador[:1] == '@' else 0,
         "partidas": {
             "total": jogador_in_tb["partidas"]["total"] + 1,
             "vitorias": (jogador_in_tb["partidas"]["vitorias"] + 1) if home_placar > away_placar and is_jogador_home or home_placar < away_placar and not is_jogador_home else jogador_in_tb["partidas"]["vitorias"],
@@ -384,6 +385,6 @@ def update_jogador(id_jogador, home_placar, away_placar, is_jogador_home):
         },
         "saldo_gols": {
             "gols_feitos": jogador_in_tb["saldo_gols"]["gols_feitos"] + (home_placar if is_jogador_home else away_placar),
-            "gols_sofridos": jogador_in_tb["saldo_gols"]["gols_feitos"] + (home_placar if not is_jogador_home else away_placar)
+            "gols_sofridos": jogador_in_tb["saldo_gols"]["gol_sofridos"] + (home_placar if not is_jogador_home else away_placar)
         }
         }})

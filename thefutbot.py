@@ -102,6 +102,9 @@ def c_fut(update: Update, context: CallbackContext) -> None:
 def c_going(update: Update, context: CallbackContext) -> None:
     id_jogador = "@" + update.message.from_user.username
 
+    if (futdatabase.futdatabase.get_jogador_by_id(id_jogador) == None):
+        update.message.reply_text("Você não está cadastrado! Use /linha ou /goleiro para se cadastrar primeiro, depois use /going para marcar presença no Fut!")
+
     confirmados = futdatabase.going_to_fut(id_jogador)
 
     if confirmados == None:
