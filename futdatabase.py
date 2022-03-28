@@ -385,6 +385,6 @@ def update_jogador(id_jogador, home_placar, away_placar, is_jogador_home):
         },
         "saldo_gols": {
             "gols_feitos": jogador_in_tb["saldo_gols"]["gols_feitos"] + (home_placar if is_jogador_home else away_placar),
-            "gols_sofridos": jogador_in_tb["saldo_gols"]["gol_sofridos"] + (home_placar if not is_jogador_home else away_placar)
+            "gols_sofridos": jogador_in_tb["saldo_gols"]["gols_sofridos"] + (home_placar if not is_jogador_home else away_placar)
         }
         }})
