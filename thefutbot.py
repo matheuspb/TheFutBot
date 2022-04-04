@@ -281,9 +281,9 @@ def main():
     load_dotenv()
 
     TOKEN = os.getenv('TELEGRAM_TOKEN')
-    PORT = os.getenv('PORT', 5000)
+    PORT = int(os.getenv('PORT', '8443'))
     APP_NAME = os.getenv('APP_NAME')
-    WEBHOOK_URL = 'https://' + APP_NAME + '.herokuapp.com/' + PORT
+    WEBHOOK_URL = 'https://' + APP_NAME + '.herokuapp.com/' + TOKEN
 
     """Start the bot."""
     # Create the Updater and pass it your bot's token.
