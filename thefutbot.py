@@ -353,8 +353,7 @@ def main():
 
     # Start the Bot
     # updater.start_polling()
-    updater.start_webhook("0.0.0.0", port=int(PORT), url_path=TOKEN)
-    updater.bot.set_webhook(WEBHOOK_URL)
+    updater.start_webhook("0.0.0.0", port=PORT, url_path=TOKEN, webhook_url=WEBHOOK_URL)
 
     # Run the bot until you press Ctrl-C or the process receives SIGINT,
     # SIGTERM or SIGABRT. This should be used most of the time, since
