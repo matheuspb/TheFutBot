@@ -21,8 +21,7 @@ import messages
 import logging
 import pymongo
 from pymongo import MongoClient
-
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import Updater, CommandHandler, ConversationHandler, MessageHandler, Filters, CallbackContext, CallbackQueryHandler
 
 # Read .env file
@@ -282,6 +281,9 @@ def main():
     load_dotenv()
 
     TOKEN = os.getenv('TELEGRAM_TOKEN')
+    PORT = int(os.getenv('PORT', 5000))
+    APP_NAME = os.getenv('APP_NAME')
+    WEBHOOK_URL = 'https://' + APP_NAME + '.herokuapp.com/' + PORT
 
     """Start the bot."""
     # Create the Updater and pass it your bot's token.
@@ -350,7 +352,9 @@ def main():
     # dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, echo))
 
     # Start the Bot
-    updater.start_polling()
+    # updater.start_polling()
+    updater.start_webhook("0.0.0.0", port=PORT, url_path=TOKEN)
+    updater.bot.set_webhook(WEBHOOK_URL)
 
     # Run the bot until you press Ctrl-C or the process receives SIGINT,
     # SIGTERM or SIGABRT. This should be used most of the time, since
