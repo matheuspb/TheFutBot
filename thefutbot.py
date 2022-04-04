@@ -281,7 +281,7 @@ def main():
     load_dotenv()
 
     TOKEN = os.getenv('TELEGRAM_TOKEN')
-    PORT = int(os.getenv('PORT', 5000))
+    PORT = os.getenv('PORT', 5000)
     APP_NAME = os.getenv('APP_NAME')
     WEBHOOK_URL = 'https://' + APP_NAME + '.herokuapp.com/' + PORT
 
@@ -353,7 +353,7 @@ def main():
 
     # Start the Bot
     # updater.start_polling()
-    updater.start_webhook("0.0.0.0", port=PORT, url_path=TOKEN)
+    updater.start_webhook("0.0.0.0", port=int(PORT), url_path=TOKEN)
     updater.bot.set_webhook(WEBHOOK_URL)
 
     # Run the bot until you press Ctrl-C or the process receives SIGINT,
