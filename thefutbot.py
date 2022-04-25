@@ -53,7 +53,7 @@ def help_command(update: Update, context: CallbackContext) -> None:
 
 
 def c_linha(update: Update, context: CallbackContext) -> None:
-    id_jogador = "@" + update.message.from_user.username   
+    id_jogador = "@" + update.message.from_user.username
     if futdatabase.add_jogador(id_jogador, False):
         update.message.reply_text(id_jogador + ' cadastrado como jogador linha!')
     else:
@@ -61,9 +61,9 @@ def c_linha(update: Update, context: CallbackContext) -> None:
 
 
 def c_goleiro(update: Update, context: CallbackContext) -> None:
-    
-    id_jogador = "@" + update.message.from_user.username   
-    
+
+    id_jogador = "@" + update.message.from_user.username
+
     if futdatabase.add_jogador(id_jogador, True):
         update.message.reply_text(id_jogador + ' cadastrado como goleiro!')
     else:
@@ -71,9 +71,9 @@ def c_goleiro(update: Update, context: CallbackContext) -> None:
 
 
 def c_mensalista(update: Update, context: CallbackContext) -> None:
-    
+
     id_jogador = "@" + update.message.from_user.username
-    
+
     if futdatabase.convert_to_mensalista(id_jogador):
         update.message.reply_text(id_jogador + ' agora é um mensalista!')
     else:
@@ -81,9 +81,9 @@ def c_mensalista(update: Update, context: CallbackContext) -> None:
 
 
 def c_diarista(update: Update, context: CallbackContext) -> None:
-    
+
     id_jogador = "@" + update.message.from_user.username
-    
+
     if futdatabase.convert_to_diarista(id_jogador):
         update.message.reply_text(id_jogador + ' agora é um diarista!')
     else:
@@ -92,9 +92,9 @@ def c_diarista(update: Update, context: CallbackContext) -> None:
 
 def c_fut(update: Update, context: CallbackContext) -> None:
     confirmados = futdatabase.create_fut()
-    
+
     message = update.message.reply_text(messages.vem_pro_fut_msg(confirmados))
-    
+
     futdatabase.set_vemprofut_message_id(message.message_id)
 
 
@@ -134,7 +134,7 @@ def c_going_convidado(update: Update, context: CallbackContext) -> None:
         reply_keyboard.append([nome_convidado])
 
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
-    
+
     update.message.reply_text("Selecione o convidado que você quer confirmar",reply_markup=markup)
 
     return CONVIDADO_GOING
@@ -142,7 +142,7 @@ def c_going_convidado(update: Update, context: CallbackContext) -> None:
 
 def r_going_convidado_finish(update: Update, context: CallbackContext) -> int:
     id_jogador = update.message.text
-    
+
     print(f'Convidado indo: {id_jogador}')
 
     confirmados = futdatabase.going_to_fut(id_jogador)
@@ -162,23 +162,23 @@ def r_going_convidado_finish(update: Update, context: CallbackContext) -> int:
 def c_convidado(update: Update, context: CallbackContext) -> None:
     message = update.message.reply_text("Informe o nome do convidado")
     futdatabase.convidado_message_id = message.message_id
-    
+
     return CONVIDADO_POSICAO
 
 def r_convidado_posicao(update: Update, context: CallbackContext) -> int:
     convidado_nome = update.message.text
-    
+
     if futdatabase.get_jogador_by_id(convidado_nome) != None:
         update.message.reply_text(f"Já existe um jogador com nome {futdatabase.convidado_nome} cadastrado")
         return ConversationHandler.END
-    
+
     futdatabase.convidado_nome = update.message.text
     reply_keyboard = [
         ['Goleiro'],
         ['Linha'],
     ]
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
-    
+
     update.message.reply_text(f"{futdatabase.convidado_nome} joga em que posição?",reply_markup=markup)
 
     return CONVIDADO_RANK
@@ -245,6 +245,9 @@ def c_placar(update: Update, context: CallbackContext) -> None:
 
     return PLACARINPUT
 
+def c_get_ranks(update: Update, context: CallbackContext) -> None:
+    update.message.reply_text(messages.show_get_ranks(futdatabase.get_get_ranks()))
+
 
 def r_placar(update: Update, context: CallbackContext) -> int:
     text = int(update.message.text)
@@ -255,19 +258,19 @@ def r_placar(update: Update, context: CallbackContext) -> int:
         return PLACARINPUT
     else:
         futdatabase.away_placar = text
-        
+
         match_results = {
             "placar":[futdatabase.home_placar, futdatabase.away_placar],
             "times": futdatabase.get_times()
         }
 
         context.bot.editMessageText(chat_id=update.message.chat_id, message_id=futdatabase.placar_message_id, text=messages.match_results_msg(match_results))
-        
+
         futdatabase.register_match()
 
         futdatabase.home_placar = None
         futdatabase.away_placar = None
-        
+
         return ConversationHandler.END
 
 
@@ -277,7 +280,7 @@ def echo(update: Update, context: CallbackContext) -> None:
 
 
 def main():
-    
+
     load_dotenv()
 
     TOKEN = os.getenv('TELEGRAM_TOKEN')
