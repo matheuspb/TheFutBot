@@ -14,6 +14,16 @@ Mensalistas são automaticamente confirmados para cada Fut.
 Quando estiverem prontos, use o comando /times para criar os times.
 """
 
+def show_ranks(ranks_dict):
+    ranks_string = ""
+    for idx, (jogador, rank) in enumerate(ranks_dict.items()):
+        confirmados_string += "{0}. @{1} - {2}\n".format(idx+1, jogador, rank)
+
+    return f"""RANKING DOS JOGADORES
+
+||{ranks_string}||
+"""
+
 def times_msg(times):
     home_string = ""
     if times[0]["goleiro"] != None:
@@ -29,7 +39,7 @@ def times_msg(times):
         if jogador_away != times[1]["goleiro"]:
             away_string = away_string + (jogador_away + "\n")
 
-    return f"""🟥 Home    x    Away 🟨 
+    return f"""🟥 Home    x    Away 🟨
 
 Home 🟥     ⚽️{times[0]["rank"]}
 {home_string}
@@ -55,7 +65,7 @@ Por favor, informe o placar do time {'🟥 Home' if placar_home == None else '�
 def match_results_msg(match_results):
 
     rank_str = ""
-    
+
     if match_results["placar"][0] > match_results["placar"][1]:
         rank_str = "Jogadores do time 🟥 Home ganharam ⚽️{0}.\nJogadores do time 🟨 Away perderam ⚽️{0}.".format((match_results["placar"][0] - match_results["placar"][1]) * 10)
     elif match_results["placar"][0] < match_results["placar"][1]:
@@ -65,7 +75,7 @@ def match_results_msg(match_results):
 
 
     return f"""⚽️ Resultado ⚽️
-    
+
 🟥 Home {match_results["placar"][0]} x {match_results["placar"][1]} Away 🟨
 
 {rank_str}

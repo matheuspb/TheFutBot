@@ -40,7 +40,7 @@ class TeamBuilderTeam:
         self.goleiro = goleiro
         self.rank = rank
         self.peita_credits = peita_credits
-        
+
 
 
 def add_jogador(id_jogador, goleiro):
@@ -74,7 +74,7 @@ def add_convidado():
     jogador_existente = tb_jogadores.find_one({"_id": convidado_nome})
 
     jogador_exists = jogador_existente == None
-    
+
     if jogador_exists:
         tb_jogadores.insert_one({
             "_id": convidado_nome,
@@ -114,11 +114,16 @@ def get_convidados_nomes():
 
     return convidados_nomes
 
+def get_ranks():
+    jogadores = tb_jogadores.find().sort("rank", -1)
+
+    return {jogador["id_jogador"]: jogador["text"] for jogador in jogadores}
+
 
 def convert_to_mensalista(id_jogador):
-    
+
     jogador_existente = tb_jogadores.find_one({"_id": id_jogador})
-    
+
     if jogador_existente != None:
         tb_jogadores.update_one({"_id": id_jogador}, {"$set":{"mensalista": True}})
         return True
@@ -127,13 +132,13 @@ def convert_to_mensalista(id_jogador):
 
 
 def convert_to_diarista(id_jogador):
-    
+
     jogador_existente = tb_jogadores.find_one({"_id": id_jogador})
-    
+
     if jogador_existente != None:
         tb_jogadores.update_one({"_id": id_jogador}, {"$set":{"mensalista": False}})
         return True
-    
+
     return False
 
 
@@ -174,7 +179,7 @@ def get_vemprofut_message_id():
 def cancela_fut():
 
     chamada_fut = tb_futs.find_one({"_id": "chamada_pro_fut"})
-    
+
     if chamada_fut == None:
         return False
 
@@ -183,13 +188,13 @@ def cancela_fut():
 
 
 def going_to_fut(id_jogador):
-    
+
     chamada_fut = tb_futs.find_one({"_id": "chamada_pro_fut"})
     if chamada_fut == None:
         return None
 
     confirmados = chamada_fut["confirmados"]
-    
+
     for confirmado in confirmados:
         if confirmado == id_jogador:
             return confirmados
@@ -200,9 +205,9 @@ def going_to_fut(id_jogador):
 
 
 def not_going_to_fut(id_jogador):
-    
+
     chamada_fut = tb_futs.find_one({"_id": "chamada_pro_fut"})
-    
+
     if chamada_fut == None:
         return None
 
@@ -228,7 +233,7 @@ def calculate_convidado_rank():
             min_rank = curr_rank
 
     print(f'min: {min_rank} max: {max_rank}')
-    
+
     conv_rank = ((max_rank - min_rank) * convidado_rank) + min_rank
 
     return conv_rank
@@ -236,7 +241,7 @@ def calculate_convidado_rank():
 
 def get_confirmados():
     chamada_fut = tb_futs.find_one({"_id": "chamada_pro_fut"})
-    
+
     if chamada_fut == None:
         return None
 
@@ -246,7 +251,7 @@ def get_confirmados():
 
 def fazer_times():
     chamada_fut = tb_futs.find_one({"_id": "chamada_pro_fut"})
-    
+
     if chamada_fut == None:
         return None
 
@@ -266,7 +271,7 @@ def fazer_times():
         confirmado_data = tb_jogadores.find_one({"_id": id_confirmado})
         confirmado = TeamBuilderJogador(id_jogador=id_confirmado, rank=confirmado_data["rank"], goleiro=confirmado_data["goleiro"], peita_credits=confirmado_data["peita_credits"])
         confirmados.append(confirmado)
-            
+
     confirmados.sort(key=lambda x: x.rank, reverse=True)
 
     for confirmado in confirmados:
@@ -282,7 +287,7 @@ def fazer_times():
     for confirmado in confirmados:
         if confirmado.id_jogador == times[0].goleiro or confirmado.id_jogador == times[1].goleiro:
             continue
-        
+
         id_time = 0
         if len(times[0].jogadores) >= limite_jogadores and len(times[1].jogadores) < limite_jogadores:
             id_time = 1
@@ -290,7 +295,7 @@ def fazer_times():
             id_time = 0
         else:
             id_time = 0 if times[0].rank <= times[1].rank else 1
-        
+
         times[id_time].jogadores.append(confirmado.id_jogador)
         times[id_time].rank += confirmado.rank
         if confirmado.id_jogador[:1] == '@':
@@ -304,7 +309,7 @@ def fazer_times():
     if times[0].peita_credits > times[1].peita_credits:
         home_id = 1
         away_id = 0
-    
+
     home = {
         "rank": times[home_id].rank,
         "goleiro": times[home_id].goleiro,
@@ -322,7 +327,7 @@ def fazer_times():
 
 def get_times():
     chamada_fut = tb_futs.find_one({"_id": "chamada_pro_fut"})
-    
+
     if chamada_fut == None:
         return None
 
@@ -331,7 +336,7 @@ def get_times():
 
 def register_match():
     chamada_fut = tb_futs.find_one({"_id": "chamada_pro_fut"})
-    
+
     if chamada_fut == None:
         return False
 
@@ -348,17 +353,17 @@ def register_match():
 
     for id_jogador_home in chamada_fut["times"]["home"]:
         update_jogador(id_jogador_home, home_placar, away_placar, True)
-        
+
     for id_jogador_away in chamada_fut["times"]["away"]:
         update_jogador(id_jogador_away, home_placar, away_placar, False)
-        
+
     match_results_msg = None
     cancela_fut()
 
 
 def update_jogador(id_jogador, home_placar, away_placar, is_jogador_home):
     jogador_in_tb = tb_jogadores.find_one({"_id": id_jogador})
-    
+
     # Calcula novo rank
     rank_to_add = 0
 
@@ -368,14 +373,14 @@ def update_jogador(id_jogador, home_placar, away_placar, is_jogador_home):
     #     rank_to_add -= 50
 
     rank_to_add += (home_placar - away_placar) * 10
-    
+
     if not is_jogador_home:
         rank_to_add *= -1
 
     new_rank = jogador_in_tb["rank"] + rank_to_add
 
     tb_jogadores.update_one({"_id": id_jogador}, {"$set":{
-        "rank": new_rank,   
+        "rank": new_rank,
         "peita_credits": (jogador_in_tb["peita_credits"] + (1 if is_jogador_home else -1)) if id_jogador[:1] == '@' else 0,
         "partidas": {
             "total": jogador_in_tb["partidas"]["total"] + 1,
