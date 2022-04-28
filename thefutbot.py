@@ -246,7 +246,7 @@ def c_placar(update: Update, context: CallbackContext) -> None:
     return PLACARINPUT
 
 def c_get_ranks(update: Update, context: CallbackContext) -> None:
-    update.message.reply_text(messages.show_get_ranks(futdatabase.get_get_ranks()))
+    update.message.reply_text(messages.show_ranks(futdatabase.get_ranks()))
 
 
 def r_placar(update: Update, context: CallbackContext) -> int:
