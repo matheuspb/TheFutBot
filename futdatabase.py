@@ -117,7 +117,7 @@ def get_convidados_nomes():
 def get_ranks():
     jogadores = tb_jogadores.find().sort("rank", -1)
 
-    return {jogador["_id"]: jogador["text"] for jogador in jogadores}
+    return {jogador["_id"]: jogador["rank"] for jogador in jogadores}
 
 
 def convert_to_mensalista(id_jogador):
