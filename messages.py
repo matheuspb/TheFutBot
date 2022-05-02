@@ -17,11 +17,12 @@ Quando estiverem prontos, use o comando /times para criar os times.
 def show_ranks(ranks_dict):
     ranks_string = ""
     for idx, (jogador, rank) in enumerate(ranks_dict.items()):
-        ranks_string += "{0}. @{1} - {2}\n".format(idx+1, jogador, rank)
+        ranks_string += "{0}\. {1} \- {2}\n".format(idx+1, jogador, int(rank))
 
-    return f"""RANKING DOS JOGADORES
-
-||{ranks_string}||
+    return f"""RANKING DOS JOGADORES\n
+||
+{ranks_string}
+||
 """
 
 def times_msg(times):

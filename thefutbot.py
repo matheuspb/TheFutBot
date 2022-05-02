@@ -14,14 +14,14 @@ Press Ctrl-C on the command line or send a signal to the process to stop the
 bot.
 """
 
-from re import match
+from re import match, sub
 from typing import Pattern
 import futdatabase
 import messages
 import logging
 import pymongo
 from pymongo import MongoClient
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, ReplyKeyboardRemove
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, ReplyKeyboardRemove, ParseMode
 from telegram.ext import Updater, CommandHandler, ConversationHandler, MessageHandler, Filters, CallbackContext, CallbackQueryHandler
 
 # Read .env file
@@ -246,7 +246,7 @@ def c_placar(update: Update, context: CallbackContext) -> None:
     return PLACARINPUT
 
 def c_get_ranks(update: Update, context: CallbackContext) -> None:
-    update.message.reply_text(messages.show_ranks(futdatabase.get_ranks()))
+    update.message.reply_markdown_v2(sub(r'[()]', '', messages.show_ranks(futdatabase.get_ranks())))
 
 
 def r_placar(update: Update, context: CallbackContext) -> int:
