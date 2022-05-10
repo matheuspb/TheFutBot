@@ -306,7 +306,6 @@ def main():
     dispatcher.add_handler(CommandHandler("times", c_times))
     dispatcher.add_handler(CommandHandler("vemprofut", c_fut))
     dispatcher.add_handler(CommandHandler("cancelafut", c_cancela_fut))
-    dispatcher.add_handler(CommandHandler("ranks", c_get_ranks))
 
 
     conv_handler_placar = ConversationHandler(
