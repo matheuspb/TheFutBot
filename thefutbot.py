@@ -245,9 +245,6 @@ def c_placar(update: Update, context: CallbackContext) -> None:
 
     return PLACARINPUT
 
-def c_get_ranks(update: Update, context: CallbackContext) -> None:
-    update.message.reply_markdown_v2(sub(r'[()]', '', messages.show_ranks(futdatabase.get_ranks())))
-
 
 def r_placar(update: Update, context: CallbackContext) -> int:
     text = int(update.message.text)
